@@ -119,7 +119,7 @@ STATE_DIR = ""
 # ===========================================================================
 # The instruction Claude is FORCED to act on when the watchdog trips.
 # This is the heart of the feature — keep it demanding and concrete.
-# Customise the doc set / standards to match how you keep notes.
+# Customize the doc set / standards to match how you keep notes.
 # ===========================================================================
 def build_notes_directive(today: str) -> str:
     """`today` is the REAL local system date, injected so notes are dated

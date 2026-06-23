@@ -117,7 +117,7 @@ You **must** start a fresh session after editing `settings.json` — a session t
 
 ---
 
-## Customise (the knobs)
+## Customize (the knobs)
 
 All in the **TUNABLES** block at the top of `continuity_watchdog.py`:
 
