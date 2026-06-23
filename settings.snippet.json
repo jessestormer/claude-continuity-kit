@@ -1,0 +1,54 @@
+{
+  "_comment": "Merge the 'hooks' block below into your ~/.claude/settings.json. If you already have a 'hooks' key, add these event arrays into it (don't replace the whole object). Paths shown are macOS/Linux examples — see README.md for Windows paths and the python vs python3 note. Remove this _comment line; JSON has no comments.",
+
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ~/.claude/hooks/inject_local_time.py",
+            "timeout": 5,
+            "statusMessage": "Stamping real local time..."
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ~/.claude/hooks/continuity_watchdog.py",
+            "timeout": 10,
+            "statusMessage": "Context watchdog..."
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ~/.claude/hooks/continuity_watchdog.py",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ~/.claude/hooks/continuity_watchdog.py",
+            "timeout": 5,
+            "statusMessage": "Continuity check..."
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,21 @@
+# Python bytecode / caches (the kit is pure source — never commit these)
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Per-project state the watchdog writes at runtime (not part of the kit)
+.claude/state/
+
+# Editor / OS cruft
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.swp
