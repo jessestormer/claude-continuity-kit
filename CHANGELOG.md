@@ -3,6 +3,14 @@
 All notable changes to the Claude Continuity Kit are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.2.0] - 2026-06-25
+
+### Added
+- **Self-calibrating watchdog threshold.** The watchdog now reads its own `compaction_log.jsonl` and fires just below where auto-compaction is *actually* occurring lately (auto-trigger events only, recent history, matched by window class), instead of a fixed fraction of the window. This tracks drift in Claude Code's compaction point — which was observed to move ~70k tokens in two weeks — so the threshold no longer silently goes stale and gets preempted. Falls back to the fixed `WATCHDOG_PCT_*` fraction until a project has logged enough auto-compactions; disable with `NOTES_WATCHDOG_AUTOCAL=0`. New tunables: `AUTOCAL_LOOKBACK_DAYS`, `AUTOCAL_MIN_SAMPLES`, `AUTOCAL_ANCHOR_PCT`, `AUTOCAL_RUNWAY`.
+
+### Changed
+- The watchdog fire banner now reports the calibrated compaction estimate (and whether it's calibrated from history or falling back to the window cap).
+
 ## [1.1.0] - 2026-06-25
 
 ### Changed

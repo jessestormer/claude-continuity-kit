@@ -70,8 +70,24 @@ WATCHDOG_PCT_1M   = 0.95
 WATCHDOG_PCT_200K = 0.80
 REARM_PCT         = 0.50   # re-arm once context drops back below this fraction
 
+# SELF-CALIBRATION (optional, on by default). The token count at which Claude
+# Code auto-compacts is NOT fixed — it varies by model and has been observed to
+# DRIFT across releases. A hard-coded fraction can end up ABOVE where compaction
+# actually fires, which silently preempts the watchdog (it never gets to block).
+# So instead of trusting a fixed fraction, read this project's OWN compaction log
+# and aim just below where auto-compaction is firing lately. Uses trigger==auto
+# rows only (a manual /compact fires at an arbitrary fill and is not the cap),
+# the same window class as the current model, and only recent history (so it
+# follows drift). Falls back to the fixed fraction until there's enough data
+# (a fresh install has none). Disable with env NOTES_WATCHDOG_AUTOCAL=0.
+AUTOCAL_LOOKBACK_DAYS = 14      # only consider auto-compactions from the last N days
+AUTOCAL_MIN_SAMPLES   = 3       # need at least this many recent points before trusting the estimate
+AUTOCAL_ANCHOR_PCT    = 0.15    # anchor at the 15th percentile of recent points (robust to a lone low outlier)
+AUTOCAL_RUNWAY        = 50_000  # fire this far below the anchor, leaving room to finish the notes pass
+
 # Env overrides: NOTES_WATCHDOG_PCT (one fraction for ALL windows),
 #                NOTES_WATCHDOG_TOKENS (absolute fire threshold for ALL models),
+#                NOTES_WATCHDOG_AUTOCAL=0 (turn OFF self-calibration; use the fixed fraction),
 #                NOTES_WATCHDOG_REARM_PCT / NOTES_WATCHDOG_REARM_TOKENS (the re-arm
 #                floor; set NOTES_WATCHDOG_REARM_TOKENS=0 so a fresh, low-token
 #                session can fire immediately — useful for testing the watchdog).
@@ -87,13 +103,78 @@ def watchdog_pct(window: int) -> float:
     return WATCHDOG_PCT_1M if window >= 1_000_000 else WATCHDOG_PCT_200K
 
 
+def _autocal_off() -> bool:
+    return os.environ.get("NOTES_WATCHDOG_AUTOCAL", "1").strip().lower() in ("0", "false", "no")
+
+
+def _percentile(sorted_vals: list, pct: float) -> int:
+    if not sorted_vals:
+        return 0
+    return sorted_vals[int(pct * (len(sorted_vals) - 1))]
+
+
+def _recent_auto_points(window: int) -> list:
+    """used_tokens of recent AUTO compactions for models in this window class.
+    AUTO only (a manual /compact fires at an arbitrary fill and is not the cap);
+    same window class; last AUTOCAL_LOOKBACK_DAYS so we track drift, not history."""
+    try:
+        cutoff = datetime.datetime.now() - datetime.timedelta(days=AUTOCAL_LOOKBACK_DAYS)
+    except Exception:
+        return []
+    pts = []
+    try:
+        with open(os.path.join(STATE_DIR, "compaction_log.jsonl"), encoding="utf-8") as fh:
+            for line in fh:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    c = json.loads(line)
+                except Exception:
+                    continue
+                if c.get("trigger") != "auto":
+                    continue
+                used = c.get("used_tokens")
+                if not isinstance(used, int) or used <= 0:   # skip synthetic/placeholder rows
+                    continue
+                if window_for_model(c.get("model") or "", used) != window:
+                    continue
+                try:
+                    when = datetime.datetime.fromisoformat(c.get("ts") or "")
+                except Exception:
+                    continue
+                if when >= cutoff:
+                    pts.append(used)
+    except Exception:
+        return []
+    return pts
+
+
+def compaction_estimate(window: int):
+    """Where auto-compaction CURRENTLY fires for this window class, from recent
+    history — or None when there isn't enough recent data to say."""
+    if _autocal_off():
+        return None
+    pts = _recent_auto_points(window)
+    if len(pts) < AUTOCAL_MIN_SAMPLES:
+        return None
+    pts.sort()
+    return _percentile(pts, AUTOCAL_ANCHOR_PCT)
+
+
 def watchdog_tokens(model: str = "", window: int = None) -> int:
-    env = os.environ.get("NOTES_WATCHDOG_TOKENS")
+    env = os.environ.get("NOTES_WATCHDOG_TOKENS")   # absolute override (used by tests)
     if env and env.strip().isdigit():
         return int(env.strip())
     if window is None:
         window = window_for_model(model)
-    return int(window * watchdog_pct(window))
+    if os.environ.get("NOTES_WATCHDOG_PCT"):        # explicit fraction override beats calibration
+        return int(window * watchdog_pct(window))
+    est = compaction_estimate(window)               # data-driven: aim just below the real compaction point
+    if est is not None:
+        thresh = est - AUTOCAL_RUNWAY
+        return max(int(window * 0.50), min(thresh, int(window * 0.95)))   # sanity clamp
+    return int(window * watchdog_pct(window))       # fallback: fixed fraction (cold start, no data)
 
 
 def rearm_tokens(model: str = "", window: int = None) -> int:
@@ -347,15 +428,18 @@ def handle_stop(data: dict) -> None:
         # The reliable alert channel is the blocked `reason` (shown verbatim as
         # "Stop hook feedback"); `systemMessage` does not always surface. We lead
         # with a loud banner and tell Claude to echo the trigger in its reply.
+        est = compaction_estimate(window)
+        compacts_near = est if est is not None else window
+        cal_note = "calibrated from recent history" if est is not None else "window cap, no recent data yet"
         banner = (
             "[!] SESSION-CONTINUITY WATCHDOG FIRED\n"
             "   Context: %s / %s tokens  (%d%% full)\n"
             "   Model: %s   Project: [%s]   Threshold: %s\n"
-            "   This chat auto-compacts near %s — writing the notes NOW so nothing is lost.\n"
-            "   (Firing too early/late? Tune NOTES_WATCHDOG_PCT or NOTES_WATCHDOG_TOKENS.)\n"
+            "   This chat auto-compacts near %s (%s) — writing the notes NOW so nothing is lost.\n"
+            "   (Tune NOTES_WATCHDOG_PCT / NOTES_WATCHDOG_TOKENS, or disable auto-cal with NOTES_WATCHDOG_AUTOCAL=0.)\n"
             "------------------------------------------------------------\n\n"
             % (format(used, ","), format(window, ","), pct_now, model or "unknown",
-               project, format(threshold, ","), format(window, ","))
+               project, format(threshold, ","), format(compacts_near, ","), cal_note)
         )
         relay = (
             "\n\nBEFORE anything else, open your reply with this exact line so the user is alerted:\n"
