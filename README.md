@@ -2,7 +2,7 @@
 
 > **Stop Claude Code from losing your work to a context reset — and from stamping the wrong date on your notes.**
 
-![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)
 &nbsp;![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-blue)
 &nbsp;![Python](https://img.shields.io/badge/python-3.x-blue)
 &nbsp;![Dependencies](https://img.shields.io/badge/dependencies-none%20%28stdlib%29-brightgreen)
@@ -159,9 +159,15 @@ Improvements, bug reports, and rough ideas are all welcome — this is meant to 
 
 The only hard rule: **a hook must never break a session** — every path exits 0, all I/O is wrapped, and it stays pure-stdlib with no network calls. Keep it that way and almost anything goes.
 
+## Credits
+
+Researched, designed, and battle-tested by **[Jesse Stormer](https://github.com/jessestormer)** (Stormer Creative), built with **Claude Code** (Anthropic). Every piece came out of real long-session debugging — diagnosing a wrong-date bug and stress-testing what actually survives a context reset — not a weekend hack.
+
+Using it, forking it, or building on it? A credit and a link back to this repo is genuinely appreciated. The [`NOTICE`](NOTICE) file carries the attribution the Apache License asks redistributors to keep.
+
 ## License
 
-**[MIT](LICENSE)** © 2026 Jesse Stormer. Use it, fork it, ship it.
+**[Apache License 2.0](LICENSE)** © 2026 Jesse Stormer. Use it, fork it, ship it commercially — just keep the [`NOTICE`](NOTICE) file and the attribution it carries. That's the Apache 2.0 ask, and it's how credit travels with the code.
 
 ---
 

@@ -3,6 +3,15 @@
 All notable changes to the Claude Continuity Kit are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.1.0] - 2026-06-25
+
+### Changed
+- **Relicensed from MIT to the Apache License 2.0.** Same permissive, commercial-friendly terms, now with an explicit attribution channel: a `NOTICE` file that redistributors must retain (Apache 2.0 §4(d)), so credit travels with the code.
+
+### Added
+- `NOTICE` file carrying project attribution (Jesse Stormer / Stormer Creative; built with Claude Code).
+- **Credits** section in the README.
+
 ## [1.0.0] - 2026-06-22
 
 Initial release.

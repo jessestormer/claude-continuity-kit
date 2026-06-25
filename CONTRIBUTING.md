@@ -42,3 +42,7 @@ You should see a JSON object containing `"decision": "block"`. Confirm every inv
 ## Style
 
 Match the existing code: comments that explain **why**, descriptive names, standard library only. If you add a knob or env var, keep the README and `settings.snippet.json` in sync with it.
+
+## License of contributions
+
+This project is licensed under the **Apache License 2.0**. By submitting a pull request, you agree your contribution is provided under that same license (Apache 2.0 §5) and that you have the right to submit it.
