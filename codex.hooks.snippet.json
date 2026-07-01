@@ -1,0 +1,42 @@
+{
+  "_comment": "Merge the hook entries below into your ~/.codex/hooks.json. Replace /absolute/path/to/ai-continuity-hooks with the folder where this repo lives. On Windows, use python and JSON-escaped backslashes, for example: python \"C:\\path\\to\\ai-continuity-hooks\\hooks\\continuity_watchdog.py\".",
+
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /absolute/path/to/ai-continuity-hooks/hooks/continuity_watchdog.py",
+            "timeout": 10,
+            "statusMessage": "Context watchdog..."
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /absolute/path/to/ai-continuity-hooks/hooks/continuity_watchdog.py",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /absolute/path/to/ai-continuity-hooks/hooks/continuity_watchdog.py",
+            "timeout": 5,
+            "statusMessage": "Continuity check..."
+          }
+        ]
+      }
+    ]
+  }
+}

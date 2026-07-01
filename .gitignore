@@ -19,3 +19,7 @@ desktop.ini
 .idea/
 .vscode/
 *.swp
+
+# Codex continuity snapshots written at runtime when the hook runs inside this repo
+.codex/continuity/
+.codex/sessions/

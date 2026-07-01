@@ -1,7 +1,17 @@
 # Changelog
 
-All notable changes to the Claude Continuity Kit are documented here.
+All notable changes to AI Continuity Hooks are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
+
+## [Unreleased]
+
+### Added
+- **Codex support in the watchdog.** The hook now detects Codex using Codex-specific signals (`.codex/sessions` transcript paths or `event_msg`/`token_count` telemetry), parses Codex token-count events, and writes Codex PreCompact snapshots to `.codex/continuity/`.
+- **Runtime-separated calibration.** Claude Code keeps `compaction_log.jsonl`; Codex uses `compaction_log.codex.jsonl`, with exact observed-window matching for Codex context windows.
+- `codex.hooks.snippet.json` and `tests/test_dual_runtime_boundary.py` for Codex registration and boundary regression coverage.
+
+### Changed
+- Watchdog state remains per-project by default, but follows `CONTINUITY_WATCHDOG_ROOT` when a root gate is configured so a workspace can share calibration intentionally.
 
 ## [1.2.0] - 2026-06-25
 
